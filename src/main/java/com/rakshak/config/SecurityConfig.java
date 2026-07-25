@@ -85,9 +85,26 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // Public APIs
-                        .requestMatchers(
-                                "/auth/**"
-                        ).permitAll()
+                		.requestMatchers(
+
+                		        // Authentication APIs
+                		        "/auth/**",
+
+                		        // Swagger / OpenAPI
+                		        "/swagger-ui/**",
+                		        "/swagger-ui.html",
+                		        "/v3/api-docs/**",
+                		        "/v3/api-docs.yaml",
+
+                		        // Swagger Resources
+                		        "/swagger-resources/**",
+                		        "/webjars/**"
+                		         
+                		     
+                		        
+                		        
+
+                		).permitAll()
 
                         // All other APIs require authentication
                         .anyRequest()

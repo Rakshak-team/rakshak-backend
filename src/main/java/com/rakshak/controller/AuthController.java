@@ -25,7 +25,14 @@ import com.rakshak.dto.request.RegisterRequest;
 import com.rakshak.dto.response.AuthResponse;
 import com.rakshak.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
+import lombok.RequiredArgsConstructor;
 
 // ============================================================================
 // Authentication Controller
@@ -33,7 +40,12 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Tag(
+        name = "Authentication APIs",
+        description = "APIs for user registration and login."
+)
 public class AuthController {
 
     // =========================================================================
@@ -43,17 +55,14 @@ public class AuthController {
     private final UserService userService;
 
     // =========================================================================
-    // Constructor
-    // =========================================================================
-
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
-
-    // =========================================================================
     // Register API
     // =========================================================================
 
+    @Operation(summary = "Register a new user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request) {
@@ -69,6 +78,11 @@ public class AuthController {
     // Login API
     // =========================================================================
 
+    @Operation(summary = "Authenticate user and generate JWT token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request) {
@@ -77,4 +91,5 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
 }

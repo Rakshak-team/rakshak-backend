@@ -91,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Validate JWT
             if (jwtService.isTokenValid(jwtToken,
-                    (com.rakshak.entity.User) userDetails)) {
+                    ((CustomUserDetails) userDetails).getUser())) {
 
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(
@@ -107,6 +107,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authenticationToken);
+                
             }
         }
 
