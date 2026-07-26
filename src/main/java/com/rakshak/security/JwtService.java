@@ -20,10 +20,13 @@ package com.rakshak.security;
 
 // Imports
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,9 +37,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-
 // ============================================================================
 // JWT Service
 // ============================================================================
@@ -45,17 +45,17 @@ import java.nio.charset.StandardCharsets;
 public class JwtService {
 
     // =========================================================================
-    // JWT Configuration
+    // Access Token Configuration
     // =========================================================================
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    @Value("${jwt.access.secret}")
+    private String accessSecret;
 
-    @Value("${jwt.expiration}")
-    private Long jwtExpiration;
+    @Value("${jwt.access.expiration}")
+    private Long accessExpiration;
 
     // =========================================================================
-    // Generate Signing Key
+    // Access Token Signing Key
     // =========================================================================
 
     /**
@@ -63,22 +63,25 @@ public class JwtService {
      *
      * @return Secret signing key
      */
-    private SecretKey getSigningKey() {
+    private SecretKey getAccessSigningKey() {
+
         return Keys.hmacShaKeyFor(
-                jwtSecret.getBytes(StandardCharsets.UTF_8)
+                accessSecret.getBytes(StandardCharsets.UTF_8)
         );
+
     }
+
     // =========================================================================
-    // Generate JWT Token
+    // Generate JWT Access Token
     // =========================================================================
 
     /**
-     * Generates a JWT token for the authenticated user.
+     * Generates a JWT access token for the authenticated user.
      *
      * @param user Authenticated user
      * @return JWT access token
      */
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
 
         Map<String, Object> claims = new HashMap<>();
 
@@ -86,17 +89,18 @@ public class JwtService {
         claims.put("role", user.getRole().name());
         claims.put("verified", user.getVerified());
 
-        return generateToken(claims, user);
+        return generateAccessToken(claims, user);
+
     }
 
     /**
-     * Generates a JWT token with custom claims.
+     * Generates a JWT access token with custom claims.
      *
      * @param extraClaims Additional claims
-     * @param user        Authenticated user
+     * @param user Authenticated user
      * @return JWT access token
      */
-    public String generateToken(
+    private String generateAccessToken(
             Map<String, Object> extraClaims,
             User user
     ) {
@@ -104,7 +108,7 @@ public class JwtService {
         Date issuedAt = new Date();
 
         Date expirationDate = new Date(
-                issuedAt.getTime() + jwtExpiration
+                issuedAt.getTime() + accessExpiration
         );
 
         return Jwts.builder()
@@ -112,9 +116,11 @@ public class JwtService {
                 .subject(user.getEmail())
                 .issuedAt(issuedAt)
                 .expiration(expirationDate)
-                .signWith(getSigningKey())
+                .signWith(getAccessSigningKey())
                 .compact();
+
     }
+
     // =========================================================================
     // Extract Claims
     // =========================================================================
@@ -126,15 +132,20 @@ public class JwtService {
      * @return User email
      */
     public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
+
+        return extractClaim(
+                token,
+                Claims::getSubject
+        );
+
     }
 
     /**
      * Extracts a specific claim from the JWT token.
      *
-     * @param token          JWT token
+     * @param token JWT token
      * @param claimsResolver Function used to extract a specific claim
-     * @param <T>            Claim type
+     * @param <T> Claim type
      * @return Extracted claim
      */
     public <T> T extractClaim(
@@ -142,8 +153,10 @@ public class JwtService {
             Function<Claims, T> claimsResolver
     ) {
 
-        final Claims claims = extractAllClaims(token);
+        Claims claims = extractAllClaims(token);
+
         return claimsResolver.apply(claims);
+
     }
 
     /**
@@ -155,11 +168,13 @@ public class JwtService {
     private Claims extractAllClaims(String token) {
 
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(getAccessSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
     }
+
     // =========================================================================
     // Token Expiration
     // =========================================================================
@@ -171,7 +186,12 @@ public class JwtService {
      * @return Expiration date
      */
     public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+
+        return extractClaim(
+                token,
+                Claims::getExpiration
+        );
+
     }
 
     /**
@@ -181,7 +201,10 @@ public class JwtService {
      * @return true if expired, otherwise false
      */
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+
+        return extractExpiration(token)
+                .before(new Date());
+
     }
 
     // =========================================================================
@@ -192,15 +215,19 @@ public class JwtService {
      * Validates the JWT token against the given user.
      *
      * @param token JWT token
-     * @param user  Authenticated user
+     * @param user Authenticated user
      * @return true if token is valid, otherwise false
      */
-    public boolean isTokenValid(String token, User user) {
+    public boolean isTokenValid(
+            String token,
+            User user
+    ) {
 
-        final String email = extractEmail(token);
+        String email = extractEmail(token);
 
         return email.equals(user.getEmail())
                 && !isTokenExpired(token);
+
     }
 
 }

@@ -34,7 +34,12 @@ import com.rakshak.repository.UserRepository;
 import com.rakshak.security.JwtService;
 import com.rakshak.service.UserService;
 import com.rakshak.exception.InvalidCredentialsException;
+import com.rakshak.entity.RefreshToken;
+import com.rakshak.service.RefreshTokenService;
+import java.util.Optional;
 
+import com.rakshak.dto.request.RefreshTokenRequest;
+import com.rakshak.exception.RefreshTokenException;
 // ============================================================================
 // User Service Implementation
 // ============================================================================
@@ -51,6 +56,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final JwtService jwtService;
+    
+    private final RefreshTokenService refreshTokenService;
 
     // =========================================================================
     // Constructor Injection
@@ -59,12 +66,14 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService
     ) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
     // =========================================================================
     // Register User
@@ -145,14 +154,11 @@ public class UserServiceImpl implements UserService {
         // Save User
         user = userRepository.save(user);
 
-        // Generate JWT
-        String jwtToken = jwtService.generateToken(user);
 
         // Build Response
         return AuthResponse.builder()
                 .success(true)
                 .message("Registration successful.")
-                .token(jwtToken)
                 .userId(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
@@ -192,14 +198,18 @@ public class UserServiceImpl implements UserService {
     	    );
     	}
 
-        // Generate JWT Token
-        String jwtToken = jwtService.generateToken(user);
+    	// Generate Access Token
+    	String accessToken = jwtService.generateAccessToken(user);
+
+    	// Generate & Store Refresh Token
+    	RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         // Build Response
         return AuthResponse.builder()
                 .success(true)
                 .message("Login successful.")
-                .token(jwtToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
                 .userId(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
@@ -213,5 +223,58 @@ public class UserServiceImpl implements UserService {
                 .verified(user.getVerified())
                 .build();
     }
+ // =========================================================================
+ // Refresh Access Token
+ // =========================================================================
+
+ @Override
+ public AuthResponse refreshToken(RefreshTokenRequest request) {
+
+     RefreshToken refreshToken = refreshTokenService
+             .findByToken(request.getRefreshToken())
+             .orElseThrow(() ->
+                     new RefreshTokenException("Invalid refresh token.")
+             );
+
+     refreshTokenService.verifyExpiration(refreshToken);
+
+     User user = refreshToken.getUser();
+
+     String accessToken = jwtService.generateAccessToken(user);
+
+     return AuthResponse.builder()
+             .success(true)
+             .message("Access token refreshed successfully.")
+             .accessToken(accessToken)
+             .refreshToken(refreshToken.getToken())
+             .userId(user.getId())
+             .firstName(user.getFirstName())
+             .lastName(user.getLastName())
+             .fullName(user.getFullName())
+             .email(user.getEmail())
+             .phoneNumber(user.getPhoneNumber())
+             .bloodGroup(user.getBloodGroup())
+             .enabled(user.getEnabled())
+             .role(user.getRole())
+             .accountStatus(user.getAccountStatus())
+             .verified(user.getVerified())
+             .build();
+
+ }
+
+ // =========================================================================
+ // Logout User
+ // =========================================================================
+
+ @Override
+ public void logout(String refreshToken) {
+
+     Optional<RefreshToken> token = refreshTokenService.findByToken(refreshToken);
+
+     if (token.isPresent()) {
+         refreshTokenService.deleteByUser(token.get().getUser());
+     }
+
+ }
 
 }

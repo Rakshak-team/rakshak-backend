@@ -9,8 +9,8 @@
  * Responsibilities:
  * • Register new users
  * • Authenticate existing users
- * • Fetch user details
- * • Manage user accounts
+ * • Refresh expired access tokens
+ * • Logout users
  * • Support future authentication features
  * ============================================================================
  */
@@ -20,6 +20,7 @@ package com.rakshak.service;
 // Imports
 
 import com.rakshak.dto.request.LoginRequest;
+import com.rakshak.dto.request.RefreshTokenRequest;
 import com.rakshak.dto.request.RegisterRequest;
 import com.rakshak.dto.response.AuthResponse;
 
@@ -48,5 +49,20 @@ public interface UserService {
      * @return Authentication response
      */
     AuthResponse login(LoginRequest request);
+
+    /**
+     * Generates a new access token using a valid refresh token.
+     *
+     * @param request Refresh token request
+     * @return Authentication response containing a new access token
+     */
+    AuthResponse refreshToken(RefreshTokenRequest request);
+
+    /**
+     * Logs out the authenticated user by invalidating the refresh token.
+     *
+     * @param refreshToken Refresh token
+     */
+    void logout(String refreshToken);
 
 }

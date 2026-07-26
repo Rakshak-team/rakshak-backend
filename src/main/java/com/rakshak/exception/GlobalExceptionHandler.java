@@ -74,6 +74,26 @@ public class GlobalExceptionHandler {
     }
 
     // =========================================================================
+    // Refresh Token Exception
+    // =========================================================================
+
+    @ExceptionHandler(RefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenException(
+            RefreshTokenException exception) {
+
+        ErrorResponse response = ErrorResponse.builder()
+                .success(false)
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
+
+    // =========================================================================
     // Resource Not Found
     // =========================================================================
 
@@ -111,6 +131,26 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(message)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    // =========================================================================
+    // Illegal Argument Exception
+    // =========================================================================
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException exception) {
+
+        ErrorResponse response = ErrorResponse.builder()
+                .success(false)
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(exception.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
 
