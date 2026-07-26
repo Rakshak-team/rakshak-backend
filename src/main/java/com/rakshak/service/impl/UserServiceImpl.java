@@ -37,6 +37,7 @@ import com.rakshak.exception.InvalidCredentialsException;
 import com.rakshak.entity.RefreshToken;
 import com.rakshak.service.RefreshTokenService;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.rakshak.dto.request.RefreshTokenRequest;
 import com.rakshak.exception.RefreshTokenException;
@@ -45,6 +46,7 @@ import com.rakshak.exception.RefreshTokenException;
 // ============================================================================
 
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
 
     // =========================================================================
@@ -228,6 +230,7 @@ public class UserServiceImpl implements UserService {
  // =========================================================================
 
  @Override
+ @Transactional
  public AuthResponse refreshToken(RefreshTokenRequest request) {
 
      RefreshToken refreshToken = refreshTokenService
