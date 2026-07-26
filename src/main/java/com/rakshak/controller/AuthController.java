@@ -9,6 +9,8 @@
  * Responsibilities:
  * • User Registration
  * • User Login
+ * • Refresh JWT Access Token
+ * • Logout User
  * ============================================================================
  */
 
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.rakshak.dto.request.LoginRequest;
+import com.rakshak.dto.request.RefreshTokenRequest;
 import com.rakshak.dto.request.RegisterRequest;
 import com.rakshak.dto.response.AuthResponse;
 import com.rakshak.service.UserService;
@@ -44,7 +47,7 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 @Tag(
         name = "Authentication APIs",
-        description = "APIs for user registration and login."
+        description = "APIs for user registration, login, token refresh and logout."
 )
 public class AuthController {
 
@@ -90,6 +93,41 @@ public class AuthController {
         AuthResponse response = userService.login(request);
 
         return ResponseEntity.ok(response);
+    }
+
+    // =========================================================================
+    // Refresh Access Token API
+    // =========================================================================
+
+    @Operation(summary = "Generate a new access token using a refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Access token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
+    })
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        AuthResponse response = userService.refreshToken(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // =========================================================================
+    // Logout API
+    // =========================================================================
+
+    @Operation(summary = "Logout user and invalidate refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logout successful")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+            @RequestBody RefreshTokenRequest request) {
+
+        userService.logout(request.getRefreshToken());
+
+        return ResponseEntity.ok("Logout successful.");
     }
 
 }
