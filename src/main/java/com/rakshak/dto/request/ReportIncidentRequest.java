@@ -1,3 +1,4 @@
+
 /**
  * ============================================================================
  * File: ReportIncidentRequest.java
@@ -42,9 +43,10 @@ public class ReportIncidentRequest {
     // Incident Details
     // =========================================================================
 
-    @NotBlank(message = "Description is required.")
+    // Optional incident description
     private String description;
 
+    // Required incident photograph URL
     @NotBlank(message = "Image URL is required.")
     private String imageUrl;
 

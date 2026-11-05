@@ -1,3 +1,4 @@
+
 /**
  * ============================================================================
  * File: AuthResponse.java
@@ -10,6 +11,7 @@
  * • Return JWT token
  * • Return authenticated user details
  * • Return account information
+ * • Return volunteer-specific information
  * • Send authentication response to frontend
  * ============================================================================
  */
@@ -75,8 +77,24 @@ public class AuthResponse {
     private String phoneNumber;
 
     private String bloodGroup;
-    
+
     private Boolean enabled;
+
+    // =========================================================================
+    // Profile Information
+    // =========================================================================
+
+    private String profileImageUrl;
+
+    // =========================================================================
+    // Medical Volunteer Information
+    // =========================================================================
+
+    private String medicalProfession;
+
+    private String organization;
+
+    private String registrationNumber;
 
     // =========================================================================
     // User Role

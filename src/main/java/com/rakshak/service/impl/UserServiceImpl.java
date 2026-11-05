@@ -1,3 +1,4 @@
+
 /**
  * ============================================================================
  * File: UserServiceImpl.java
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.rakshak.dto.request.RefreshTokenRequest;
 import com.rakshak.exception.RefreshTokenException;
+
 // ============================================================================
 // User Service Implementation
 // ============================================================================
@@ -58,7 +60,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final JwtService jwtService;
-    
+
     private final RefreshTokenService refreshTokenService;
 
     // =========================================================================
@@ -77,6 +79,7 @@ public class UserServiceImpl implements UserService {
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
     }
+
     // =========================================================================
     // Register User
     // =========================================================================
@@ -86,9 +89,11 @@ public class UserServiceImpl implements UserService {
 
         // Validate password confirmation
         if (!request.getPassword().equals(request.getConfirmPassword())) {
+
             throw new IllegalArgumentException(
                     "Password and Confirm Password do not match."
             );
+
         }
 
         // Check duplicate email
@@ -151,11 +156,11 @@ public class UserServiceImpl implements UserService {
             user.setVerified(true);
             user.setEnabled(true);
             user.setAccountStatus(AccountStatus.ACTIVE);
+
         }
 
         // Save User
         user = userRepository.save(user);
-
 
         // Build Response
         return AuthResponse.builder()
@@ -172,8 +177,18 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole())
                 .accountStatus(user.getAccountStatus())
                 .verified(user.getVerified())
+
+                // Profile Information
+                .profileImageUrl(user.getProfileImageUrl())
+
+                // Medical Volunteer Information
+                .medicalProfession(user.getMedicalProfession())
+                .organization(user.getOrganization())
+                .registrationNumber(user.getRegistrationNumber())
+
                 .build();
     }
+
     // =========================================================================
     // Login User
     // =========================================================================
@@ -182,29 +197,31 @@ public class UserServiceImpl implements UserService {
     public AuthResponse login(LoginRequest request) {
 
         // Find user by email
-    	User user = userRepository.findByEmail(request.getEmail())
-    			.orElseThrow(() ->
-    	        new InvalidCredentialsException(
-    	                "Invalid email or password."
-    	        )
-    	);
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new InvalidCredentialsException(
+                                "Invalid email or password."
+                        )
+                );
 
         // Verify password
-    	if (!passwordEncoder.matches(
-    	        request.getPassword(),
-    	        user.getPassword()
-    	)) {
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )) {
 
-    	    throw new InvalidCredentialsException(
-    	            "Invalid email or password."
-    	    );
-    	}
+            throw new InvalidCredentialsException(
+                    "Invalid email or password."
+            );
 
-    	// Generate Access Token
-    	String accessToken = jwtService.generateAccessToken(user);
+        }
 
-    	// Generate & Store Refresh Token
-    	RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        // Generate Access Token
+        String accessToken = jwtService.generateAccessToken(user);
+
+        // Generate & Store Refresh Token
+        RefreshToken refreshToken =
+                refreshTokenService.createRefreshToken(user);
 
         // Build Response
         return AuthResponse.builder()
@@ -223,61 +240,86 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole())
                 .accountStatus(user.getAccountStatus())
                 .verified(user.getVerified())
+
+                // Profile Information
+                .profileImageUrl(user.getProfileImageUrl())
+
+                // Medical Volunteer Information
+                .medicalProfession(user.getMedicalProfession())
+                .organization(user.getOrganization())
+                .registrationNumber(user.getRegistrationNumber())
+
                 .build();
     }
- // =========================================================================
- // Refresh Access Token
- // =========================================================================
 
- @Override
- @Transactional
- public AuthResponse refreshToken(RefreshTokenRequest request) {
+    // =========================================================================
+    // Refresh Access Token
+    // =========================================================================
 
-     RefreshToken refreshToken = refreshTokenService
-             .findByToken(request.getRefreshToken())
-             .orElseThrow(() ->
-                     new RefreshTokenException("Invalid refresh token.")
-             );
+    @Override
+    @Transactional
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
 
-     refreshTokenService.verifyExpiration(refreshToken);
+        RefreshToken refreshToken = refreshTokenService
+                .findByToken(request.getRefreshToken())
+                .orElseThrow(() ->
+                        new RefreshTokenException(
+                                "Invalid refresh token."
+                        )
+                );
 
-     User user = refreshToken.getUser();
+        refreshTokenService.verifyExpiration(refreshToken);
 
-     String accessToken = jwtService.generateAccessToken(user);
+        User user = refreshToken.getUser();
 
-     return AuthResponse.builder()
-             .success(true)
-             .message("Access token refreshed successfully.")
-             .accessToken(accessToken)
-             .refreshToken(refreshToken.getToken())
-             .userId(user.getId())
-             .firstName(user.getFirstName())
-             .lastName(user.getLastName())
-             .fullName(user.getFullName())
-             .email(user.getEmail())
-             .phoneNumber(user.getPhoneNumber())
-             .bloodGroup(user.getBloodGroup())
-             .enabled(user.getEnabled())
-             .role(user.getRole())
-             .accountStatus(user.getAccountStatus())
-             .verified(user.getVerified())
-             .build();
+        String accessToken = jwtService.generateAccessToken(user);
 
- }
+        return AuthResponse.builder()
+                .success(true)
+                .message("Access token refreshed successfully.")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .userId(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .bloodGroup(user.getBloodGroup())
+                .enabled(user.getEnabled())
+                .role(user.getRole())
+                .accountStatus(user.getAccountStatus())
+                .verified(user.getVerified())
 
- // =========================================================================
- // Logout User
- // =========================================================================
+                // Profile Information
+                .profileImageUrl(user.getProfileImageUrl())
 
- @Override
- public void logout(String refreshToken) {
+                // Medical Volunteer Information
+                .medicalProfession(user.getMedicalProfession())
+                .organization(user.getOrganization())
+                .registrationNumber(user.getRegistrationNumber())
 
-     Optional<RefreshToken> token = refreshTokenService.findByToken(refreshToken);
+                .build();
+    }
 
-     if (token.isPresent()) {
-         refreshTokenService.deleteByUser(token.get().getUser());
-     }
+    // =========================================================================
+    // Logout User
+    // =========================================================================
 
- }
+    @Override
+    public void logout(String refreshToken) {
+
+        Optional<RefreshToken> token =
+                refreshTokenService.findByToken(refreshToken);
+
+        if (token.isPresent()) {
+
+            refreshTokenService.deleteByUser(
+                    token.get().getUser()
+            );
+
+        }
+
+    }
 
 }

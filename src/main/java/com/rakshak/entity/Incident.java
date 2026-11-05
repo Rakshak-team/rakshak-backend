@@ -61,7 +61,7 @@ public class Incident extends BaseEntity {
     // Incident Details
     // =========================================================================
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
